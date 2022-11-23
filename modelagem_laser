@@ -1,0 +1,40 @@
+clear all; clc
+close all;
+
+img = imread('laser_micromachines.png' ); % Realiza a leitura da imagem do modelo base
+image('CData',img,'XData',[389.63 415.15],'YData',[0.99 0.005]);
+hold on
+
+la =  [ 390 395.61 397.51 398.83 399.59 399.73 399.87 399.92 400.1 400.21 400.35 400.54 401.25 402.57 405.23 410];
+S = [ 0.0225 .021864 .044 .077218 .17132 .39642 .44439 .8577 0.979 .80603 .5754 .22483 .095669 .051386 .02371 .0225]; % Sensibilidade espectral relativa
+
+set(gca,'FontSize',12,'FontName', 'Times');
+xlabel('$\lambda$  [nm]','interpreter','latex','FontSize', 14);
+ylabel('${\rm S}_i(\lambda)$','interpreter','latex','FontSize', 14);
+xlim([390 415])
+
+%plot(la,S,'k-');
+
+% x(1) -> sigma (abertura ou FWHM)
+% x(2) -> mu (comprimento de onda central)
+k = 3; 
+fun = @(x) (1./(x(1)*(2*pi).^(1/2)).*exp(-0.5.*((la-x(2))./x(1)).^2)).^k - S; % Função gaussiana
+
+lb = [ .1, 390]; % limite inferior1
+ub = [ 10, 415]; % limite superior
+x0 = [ 5, 402]; % ponto inicial de busca
+options = optimoptions('lsqnonlin','Display','iter');
+[x,resnorm,residual,exitflag,output] = lsqnonlin(fun,x0,lb,ub,options) % Função iterativa de soma dos mínimos quadrados
+
+x(3) = .0224 % ->  coeficiente linear (deslocamento vertical)
+x(2) = 402.45
+x
+
+
+lambda = 390:.01:415;
+Sa = (1./(x(1)*(2*pi).^(1/2)).*exp(-0.5.*((lambda-x(2))./x(1)).^2)).^k + x(3);
+cs='red';
+n=1.8;
+plot(lambda,Sa,'LineWidth',n,'Color',cs);
+
+
